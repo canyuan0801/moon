@@ -10,16 +10,18 @@
 
 //////////////////////////////////uuid///////////////////////////////////
 // static constexpr int64_t FLAG_BITS = 1;
-static constexpr int64_t TYPE_BITS = 9;
+static constexpr int64_t TYPE_BITS = 9; // 类型在64位证书中占用的位数是9，现在这4个加起来=62，剩下了2位，1位是符号位，还剩下1位，这个1位是干嘛的？
 static constexpr int64_t SERVERID_BITS = 12;
 static constexpr int64_t BOOTTIMES_BITS = 10;
 static constexpr int64_t SEQUENCE_BITS = 31;
 
-static constexpr int64_t TYPE_MAX = (int64_t { 1 } << TYPE_BITS) - 1;
-static constexpr int64_t BOOTTIMES_MAX = (int64_t { 1 } << BOOTTIMES_BITS) - 1;
-static constexpr int64_t SERVERID_MAX = (int64_t { 1 } << SERVERID_BITS) - 1;
-static constexpr int64_t SEQUENCE_MAX = (int64_t { 1 } << SEQUENCE_BITS) - 1;
+static constexpr int64_t TYPE_MAX = (int64_t { 1 } << TYPE_BITS) - 1; // 511
+static constexpr int64_t BOOTTIMES_MAX = (int64_t { 1 } << BOOTTIMES_BITS) - 1; // 4095
+static constexpr int64_t SERVERID_MAX = (int64_t { 1 } << SERVERID_BITS) - 1; // 1023
+static constexpr int64_t SEQUENCE_MAX = (int64_t { 1 } << SEQUENCE_BITS) - 1; // 2^31 - 1 = 2147483647
 
+// 编码过程：如果类型字段为5，左移31位变成64位整数；
+// 解码过程: 64位整数右移31位，得到类型字段5
 static constexpr int64_t TYPE_LEFT_SHIFT = SEQUENCE_BITS;
 static constexpr int64_t BOOTTIMES_LEFT_SHIFT = TYPE_LEFT_SHIFT + TYPE_BITS;
 static constexpr int64_t SERVERID_LEFT_SHIFT = BOOTTIMES_LEFT_SHIFT + BOOTTIMES_BITS;
