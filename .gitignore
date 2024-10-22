@@ -20,4 +20,5 @@ build/obj/
 exmaple/log/
 test/twitter-out.json
 moon.exe
+.idea/
 
