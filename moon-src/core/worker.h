@@ -7,6 +7,7 @@ namespace moon {
 class server;
 
 class worker {
+    // queue_type is a thread-safe queue that stores message objects, uses a std::mutex for synchronization, and uses a std::vector as the underlying container.
     using queue_type = concurrent_queue<message, std::mutex, std::vector>;
 
     using asio_work_type = asio::executor_work_guard<asio::io_context::executor_type>;

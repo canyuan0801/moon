@@ -8,9 +8,11 @@
 
 namespace moon {
 worker::worker(server* srv, uint32_t id):
+    // 这些虽然没有等号，但都是赋值语句
     workerid_(id),
     server_(srv),
     io_ctx_(1),
+    // make_work_guard是确保线程执行完，别等thread刚刚创建完就因为main完了而被迫终止
     work_(asio::make_work_guard(io_ctx_)) {}
 
 worker::~worker() {
@@ -19,6 +21,7 @@ worker::~worker() {
 
 uint32_t worker::alive() {
     auto n = version_;
+    // 为什么这里要异步？不过这可以保证version_的原子性，避免race condition
     asio::post(io_ctx_, [this]() { ++version_; });
     return n;
 }
@@ -29,6 +32,8 @@ void worker::run() {
     thread_ = std::thread([this]() {
         CONSOLE_INFO("WORKER-%u START", workerid_);
         io_ctx_.run();
+
+        // TODO 为什么下面还要关闭,我猜这个应该是io_ctx销毁时才会跑到这里的回调
         socket_server_->close_all();
         services_.clear();
         CONSOLE_INFO("WORKER-%u STOP", workerid_);
@@ -46,6 +51,7 @@ void worker::stop() {
 }
 
 void worker::wait() {
+    // 为什么这里需要stop呢? 可能这个方法就是用来关闭io_ctx的，然后再让thread_运行完再继续调用方运行
     io_ctx_.stop();
     if (thread_.joinable()) {
         thread_.join();
@@ -53,6 +59,7 @@ void worker::wait() {
 }
 
 void worker::new_service(std::unique_ptr<service_conf> conf) {
+    // 提供当前有多少个服务正在被创建
     count_.fetch_add(1, std::memory_order_release);
     asio::post(io_ctx_, [this, conf = std::move(conf)]() {
         do {
@@ -75,6 +82,7 @@ void worker::new_service(std::unique_ptr<service_conf> conf) {
                 }
                 serviceid = nextid_ | (id() << WORKER_ID_SHIFT);
                 ++counter;
+                // 如果services_为empty,那么services_find(serviceid)就是services_.end()，所以下面的condition为false
             } while (services_.find(serviceid) != services_.end());
 
             if (serviceid == 0) {
